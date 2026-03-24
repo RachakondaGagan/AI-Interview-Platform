@@ -7,7 +7,7 @@ import { Mic, MicOff, PhoneOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
-import { interviewer } from "@/constants";
+import { interviewer, setupAssistant } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -137,12 +137,7 @@ const Agent = ({
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-        variableValues: {
-          username: userName,
-          userid: userId,
-        },
-      });
+      await vapi.start(setupAssistant);
     } else {
       let formattedQuestions = "";
       if (questions) {
@@ -151,11 +146,25 @@ const Agent = ({
           .join("\n");
       }
 
-      await vapi.start(interviewer, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+      // Deep clone the interviewer object to modify it safely
+      const dynamicInterviewer = JSON.parse(JSON.stringify(interviewer));
+      
+      // Manually replace ALL occurrences of {{questions}} in the system prompt
+      if (dynamicInterviewer.model && Array.isArray(dynamicInterviewer.model.messages)) {
+        dynamicInterviewer.model.messages = dynamicInterviewer.model.messages.map((msg: any) => {
+          if (msg.role === "system" && typeof msg.content === "string") {
+            const fallback = "Ask general behavioral interview questions.";
+            return {
+              ...msg,
+              // Use split.join or global regex to ensure every instance is replaced!
+              content: msg.content.split("{{questions}}").join(formattedQuestions || fallback),
+            };
+          }
+          return msg;
+        });
+      }
+
+      await vapi.start(dynamicInterviewer);
     }
   };
 
