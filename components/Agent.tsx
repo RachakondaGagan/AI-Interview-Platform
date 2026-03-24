@@ -7,8 +7,8 @@ import { Mic, MicOff, PhoneOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
-import { interviewer, setupAssistant } from "@/constants";
-import { createFeedback } from "@/lib/actions/general.action";
+import { interviewer, setupAssistant, companyPersonas } from "@/constants";
+import { createFeedback, generateInterviewAction } from "@/lib/actions/general.action";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -29,6 +29,7 @@ const Agent = ({
   feedbackId,
   type,
   questions,
+  company = "Default",
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -126,18 +127,36 @@ const Agent = ({
 
     if (callStatus === CallStatus.FINISHED) {
       if (type === "generate") {
-        router.push("/");
+        generateInterviewAction({
+          transcript: messages,
+          company: company || "Default",
+          userId: userId || "",
+          userName: userName || "",
+        }).then((res) => {
+          if (res.success && res.interviewId) {
+            router.push(`/interview/${res.interviewId}`);
+          } else {
+            router.push("/");
+          }
+        });
       } else {
         handleGenerateFeedback(messages);
       }
     }
-  }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
+  }, [messages, callStatus, feedbackId, interviewId, router, type, userId, company, userName]);
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
-      await vapi.start(setupAssistant);
+      const dynamicSetup = JSON.parse(JSON.stringify(setupAssistant));
+      if (dynamicSetup.model && Array.isArray(dynamicSetup.model.messages)) {
+        dynamicSetup.model.messages = dynamicSetup.model.messages.map((msg: any) => ({
+          ...msg,
+          content: msg.content.replace("your interview", `your highly customized ${company} interview`),
+        }));
+      }
+      await vapi.start(dynamicSetup);
     } else {
       let formattedQuestions = "";
       if (questions) {
@@ -146,18 +165,29 @@ const Agent = ({
           .join("\n");
       }
 
-      // Deep clone the interviewer object to modify it safely
+      const selectedPersona = companyPersonas[company] || companyPersonas["Default"];
       const dynamicInterviewer = JSON.parse(JSON.stringify(interviewer));
       
-      // Manually replace ALL occurrences of {{questions}} in the system prompt
+      // Inject Voice Details
+      if (dynamicInterviewer.voice) {
+        dynamicInterviewer.voice = {
+          ...dynamicInterviewer.voice,
+          voiceId: selectedPersona.voiceId,
+          speed: selectedPersona.speed,
+          style: selectedPersona.style,
+        };
+      }
+
+      // Inject Guidelines & Variables into System Prompt
       if (dynamicInterviewer.model && Array.isArray(dynamicInterviewer.model.messages)) {
         dynamicInterviewer.model.messages = dynamicInterviewer.model.messages.map((msg: any) => {
           if (msg.role === "system" && typeof msg.content === "string") {
             const fallback = "Ask general behavioral interview questions.";
             return {
               ...msg,
-              // Use split.join or global regex to ensure every instance is replaced!
-              content: msg.content.split("{{questions}}").join(formattedQuestions || fallback),
+              content: msg.content
+                .split("{{questions}}").join(formattedQuestions || fallback)
+                .split("[Identity]").join(`[Identity]\n${selectedPersona.guidelines}\n\n`),
             };
           }
           return msg;
@@ -177,6 +207,17 @@ const Agent = ({
     const nextMute = !isMuted;
     vapi.setMuted(nextMute);
     setIsMuted(nextMute);
+
+    // If user unmutes, forcefully interrupt the AI so they can speak
+    if (!nextMute && callStatus === CallStatus.ACTIVE) {
+      vapi.send({
+        type: "add-message",
+        message: {
+          role: "system",
+          content: "The user has just unmuted their microphone to intervene. Please stop speaking immediately and listen to them.",
+        },
+      });
+    }
   };
 
   return (

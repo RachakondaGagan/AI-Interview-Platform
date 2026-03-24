@@ -334,6 +334,18 @@
   @apply bg-gradient-to-l from-[#FFFFFF] to-[#CAC5FE];
 }
 
+@utility glow-system {
+  @apply absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary-200/20 blur-[120px] pointer-events-none rounded-full mix-blend-screen;
+}
+
+@utility glow-accent {
+  @apply absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[100px] pointer-events-none rounded-full mix-blend-screen;
+}
+
+@utility glass-card {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl;
+}
+
 @utility flex-center {
   @apply flex items-center justify-center;
 }

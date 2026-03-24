@@ -8,6 +8,14 @@ import DisplayTechIcons from "./DisplayTechIcons";
 import { cn, getRandomInterviewCover } from "@/lib/utils";
 import { getFeedbackByInterviewId } from "@/lib/actions/general.action";
 
+const topCompanies = [
+  { name: "Google", logo: "/covers/google.svg" },
+  { name: "Microsoft", logo: "/covers/microsoft.svg" },
+  { name: "Adobe", logo: "/covers/adobe.png" },
+  { name: "Facebook", logo: "/covers/facebook.png" },
+  { name: "Amazon", logo: "/covers/amazon.png" },
+];
+
 const InterviewCard = async ({
   interviewId,
   userId,
@@ -15,6 +23,7 @@ const InterviewCard = async ({
   type,
   techstack,
   createdAt,
+  company,
 }: InterviewCardProps) => {
   const feedback =
     userId && interviewId
@@ -37,31 +46,40 @@ const InterviewCard = async ({
     feedback?.createdAt || createdAt || Date.now()
   ).format("MMM D, YYYY");
 
+  const companyLogo = topCompanies.find((c) => c.name === company)?.logo || getRandomInterviewCover();
+
   return (
-    <div className="card-border w-[360px] max-sm:w-full min-h-96">
-      <div className="card-interview">
+    <div className="card-border w-[360px] max-sm:w-full min-h-96 hover:scale-[1.02] transition-transform duration-300">
+      <div className="card-interview flex flex-col justify-between">
         <div>
           {/* Type Badge */}
           <div
             className={cn(
-              "absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg",
+              "absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-xl shadow-lg",
               badgeColor
             )}
           >
-            <p className="badge-text ">{normalizedType}</p>
+            <p className="badge-text text-white drop-shadow-md">{normalizedType}</p>
           </div>
 
-          {/* Cover Image */}
-          <Image
-            src={getRandomInterviewCover()}
-            alt="cover-image"
-            width={90}
-            height={90}
-            className="rounded-full object-fit size-[90px]"
-          />
+          <div className="flex items-center gap-4 mt-2">
+            {/* Cover Image */}
+            <div className="relative w-[70px] h-[70px] bg-white/5 rounded-2xl p-2 shadow-inner border border-white/10 flex items-center justify-center">
+              <Image
+                src={companyLogo}
+                alt="company-logo"
+                width={50}
+                height={50}
+                className="object-contain"
+              />
+            </div>
 
-          {/* Interview Role */}
-          <h3 className="mt-5 capitalize">{role} Interview</h3>
+            {/* Interview Role */}
+            <div className="flex flex-col">
+              <h3 className="capitalize text-xl font-bold tracking-wide text-white">{role}</h3>
+              {company && <p className="text-primary-200 text-sm font-semibold tracking-wider">{company}</p>}
+            </div>
+          </div>
 
           {/* Date & Score */}
           <div className="flex flex-row gap-5 mt-3">
