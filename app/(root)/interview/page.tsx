@@ -1,9 +1,10 @@
 import Agent from "@/components/Agent";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 
-const Page = async ({ searchParams }: { searchParams: { company?: string } }) => {
+const Page = async ({ searchParams }: { searchParams: Promise<{ company?: string }> }) => {
   const user = await getCurrentUser();
-  const company = searchParams.company || "Default";
+  const resolvedParams = await searchParams;
+  const company = resolvedParams.company || "Default";
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-5xl mx-auto min-h-[75vh]">

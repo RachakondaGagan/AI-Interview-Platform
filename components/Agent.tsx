@@ -146,6 +146,7 @@ const Agent = ({
   }, [messages, callStatus, feedbackId, interviewId, router, type, userId, company, userName]);
 
   const handleCall = async () => {
+    console.log("Token present:", !!process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN);
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
@@ -156,7 +157,11 @@ const Agent = ({
           content: msg.content.replace("your interview", `your highly customized ${company} interview`),
         }));
       }
-      await vapi.start(dynamicSetup);
+      try {
+        await vapi.start(dynamicSetup);
+      } catch (err: any) {
+        console.error("Error starting VAPI (Setup):", err?.message || err);
+      }
     } else {
       let formattedQuestions = "";
       if (questions) {
@@ -194,7 +199,11 @@ const Agent = ({
         });
       }
 
-      await vapi.start(dynamicInterviewer);
+      try {
+        await vapi.start(dynamicInterviewer);
+      } catch (err: any) {
+        console.error("Error starting VAPI (Interviewer):", err?.message || err);
+      }
     }
   };
 
