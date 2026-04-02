@@ -46,25 +46,29 @@ const InterviewCard = async ({
     feedback?.createdAt || createdAt || Date.now()
   ).format("MMM D, YYYY");
 
-  const companyLogo = topCompanies.find((c) => c.name === company)?.logo || getRandomInterviewCover();
+  const companyLogo =
+    topCompanies.find((c) => c.name === company)?.logo ||
+    getRandomInterviewCover();
 
   return (
-    <div className="card-border w-[360px] max-sm:w-full min-h-96 hover:scale-[1.02] transition-transform duration-300">
-      <div className="card-interview flex flex-col justify-between">
+    <div className="card-border w-[360px] max-sm:w-full min-h-96 hover:scale-[1.03] transition-all duration-300 hover:shadow-2xl">
+      <div className="card-interview flex flex-col justify-between p-5 gap-4">
         <div>
           {/* Type Badge */}
           <div
             className={cn(
-              "absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-xl shadow-lg",
+              "absolute top-0 right-0 w-fit px-3 py-1.5 rounded-bl-xl shadow-md backdrop-blur-md",
               badgeColor
             )}
           >
-            <p className="badge-text text-white drop-shadow-md">{normalizedType}</p>
+            <p className="badge-text text-white text-xs font-semibold">
+              {normalizedType}
+            </p>
           </div>
 
           <div className="flex items-center gap-4 mt-2">
             {/* Cover Image */}
-            <div className="relative w-[70px] h-[70px] bg-white/5 rounded-2xl p-2 shadow-inner border border-white/10 flex items-center justify-center">
+            <div className="relative w-[70px] h-[70px] bg-white/10 rounded-xl p-2 shadow-sm border border-white/20 flex items-center justify-center">
               <Image
                 src={companyLogo}
                 alt="company-logo"
@@ -76,40 +80,46 @@ const InterviewCard = async ({
 
             {/* Interview Role */}
             <div className="flex flex-col">
-              <h3 className="capitalize text-xl font-bold tracking-wide text-white">{role}</h3>
-              {company && <p className="text-primary-200 text-sm font-semibold tracking-wider">{company}</p>}
+              <h3 className="capitalize text-lg font-semibold text-white">
+                {role}
+              </h3>
+              {company && (
+                <p className="text-primary-300 text-xs font-medium tracking-wide">
+                  {company}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Date & Score */}
-          <div className="flex flex-row gap-5 mt-3">
-            <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-6 mt-3 text-sm text-gray-300">
+            <div className="flex flex-row gap-2 items-center">
               <Image
                 src="/calendar.svg"
-                width={22}
-                height={22}
+                width={20}
+                height={20}
                 alt="calendar"
               />
               <p>{formattedDate}</p>
             </div>
 
             <div className="flex flex-row gap-2 items-center">
-              <Image src="/star.svg" width={22} height={22} alt="star" />
+              <Image src="/star.svg" width={20} height={20} alt="star" />
               <p>{feedback?.totalScore || "---"}/100</p>
             </div>
           </div>
 
           {/* Feedback or Placeholder Text */}
-          <p className="line-clamp-2 mt-5">
+          <p className="line-clamp-2 mt-4 text-sm text-gray-300 leading-relaxed">
             {feedback?.finalAssessment ||
               "You haven't taken this interview yet. Take it now to improve your skills."}
           </p>
         </div>
 
-        <div className="flex flex-row justify-between">
+        <div className="flex flex-row justify-between items-center mt-4">
           <DisplayTechIcons techStack={techstack} />
 
-          <Button className="btn-primary">
+          <Button className="btn-primary px-4 py-2 text-sm rounded-lg">
             <Link
               href={
                 feedback
